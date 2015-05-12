@@ -6,7 +6,7 @@ Proof of concept Puppet module to manage a docker-compose application
 
 ##Module Description
 
-This Puppet module allows to manage a docker-compose application defined via 
+This Puppet module allows to manage a docker-compose application defined via
 a YAML file
 
 ##Usage
@@ -18,7 +18,7 @@ include docker_compose
 ```
 
 This will install docker-compose into a Python virtualenv and will configure it.
-The latest version will be installed by default. If a specific version is 
+The latest version will be installed by default. If a specific version is
 required, it can be passed as parameter:
 
 ```
@@ -31,8 +31,8 @@ To manage a docker-compose application:
 
 ```
 docker_compose::application { 'foo_app':
-  content => file('files/foo_app.yaml'),
   ensure  => 'present',
+  content => file('files/foo_app.yaml'),
 }
 ```
 
