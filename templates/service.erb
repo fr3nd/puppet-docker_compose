@@ -1,0 +1,115 @@
+#!/bin/sh
+#
+# This file is managed by Puppet and local changes
+# may be overwritten
+#
+#    /etc/rc.d/init.d/<servicename>
+#
+#    Daemon for <%= @title %>
+#
+# chkconfig: 2345 97 15
+# description: docker-compose application <%= @title %>
+
+### BEGIN INIT INFO
+## Provides:       docker-<%= @sanitised_title %>
+## Required-Start: $network docker
+## Required-Stop: $network docker
+## Should-Start:
+## Should-Stop:
+## Default-Start: 2 3 4 5
+## Default-Stop:  0 1 6
+## Short-Description: start and stop docker-compose application <%= @title %>
+## Description: docker-compose application <%= @title %>
+#### END INIT INFO
+
+if [ -e /etc/init.d/functions ]; then
+    . /etc/init.d/functions
+elif [ -e /lib/lsb/init-functions ]; then
+    . /lib/lsb/init-functions
+    failure() {
+        log_failure_msg "$@"
+        return 1
+    }
+    success() {
+        log_success_msg "$@"
+        return 0
+    }
+else
+    failure() {
+        echo "fail: $@" >&2
+        exit 1
+    }
+    success() {
+        echo "success: $@" >&2
+        exit 0
+    }
+fi
+
+HOME=/root/
+docker="/usr/bin/docker"
+compose="/usr/local/bin/docker-compose"
+prog="docker-<%= @sanitised_title %>"
+if [ -d /var/lock/subsys ]; then
+    lockfile="/var/lock/subsys/$prog"
+else
+    unset lockfile
+fi
+
+start() {
+    [ -x $docker ] || exit 5
+    [ -x $compose ] || exit 5
+    printf "Starting $prog:\t"
+    $compose -f /etc/docker-compose/<%= @title %>.yml rm --force >/dev/null 2>&1
+    $compose -f /etc/docker-compose/<%= @title %>.yml up -d
+    retval=$?
+    echo
+    if [ $retval -eq 0 ]; then
+        success
+    else
+        failure
+    fi
+}
+
+stop() {
+    echo -n "Stopping $prog: "
+    $compose -f /etc/docker-compose/<%= @title %>.yml stop
+    $compose -f /etc/docker-compose/<%= @title %>.yml rm --force
+    retval=$?
+    echo
+    if [ $retval -eq 0 ]; then
+        success
+    else
+        failure
+    fi
+}
+
+status() {
+    $compose -f /etc/docker-compose/<%= @title %>.yml ps -q | xargs docker inspect --format='{{.State.Running}}' > /dev/null 2>&1 | grep -vq false 
+    retval=$?
+    $compose -f /etc/docker-compose/<%= @title %>.yml ps
+    exit $retval
+}
+
+case "$1" in
+    start)
+    start
+    ;;
+    stop)
+    stop
+    ;;
+    status)
+    status
+    ;;
+    restart|reload)
+    stop
+    start
+    ;;
+    condrestart)
+    [ -f /var/lock/subsys/$prog ] && restart || :
+    ;;
+    *)
+    echo "Usage: $0 [start|stop|status|reload|restart]"
+    exit 1
+    ;;
+esac
+exit $?
